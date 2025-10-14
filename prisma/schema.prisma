@@ -1,0 +1,218 @@
+// BiMentor Prisma Schema
+// Supabase PostgreSQL database schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  mentee
+  mentor
+  admin
+}
+
+enum MentorType {
+  individual
+  corporate
+}
+
+enum MentorStatus {
+  pending_verification
+  verified
+  suspended
+}
+
+// ============================================
+// MAIN MODELS
+// ============================================
+
+model User {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String   @unique
+  full_name     String
+  role          UserRole
+  password_hash String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  mentee_profile     Mentee?
+  mentor_profile     Mentor?
+  user_consent       UserConsent?
+
+  @@map("app_users")
+}
+
+model Mentee {
+  user_id            String   @id @db.Uuid
+  short_goal         String
+  target_track       String
+  budget             String
+  time_preference    String
+  city               String?
+  country            String   @default("Turkey")
+  goal_type          String?
+  service_focus      String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("mentees")
+}
+
+model Mentor {
+  user_id             String        @id @db.Uuid
+  mentor_type         MentorType
+  display_name        String
+  title               String
+  years_experience    Int           @default(0)
+  hourly_rate_cents   Int
+  currency            String?       @default("TRY")
+  meeting_preference  String
+  bio_short           String
+  bio_long            String
+  city                String?
+  country             String        @default("Turkey")
+  rating_avg          Decimal       @default(0.00) @db.Decimal(3, 2)
+  total_reviews       Int           @default(0)
+  status              MentorStatus  @default(pending_verification)
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+
+  // Relations
+  user              User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("mentors")
+}
+
+// ============================================
+// REFERENCE TABLES
+// ============================================
+
+model ServiceFocusRef {
+  id        String @id
+  label     String
+  active    Boolean @default(true)
+  sort_order Int    @default(0)
+
+  @@map("service_focus_ref")
+}
+
+model LanguageRef {
+  id        String @id
+  label     String
+  active    Boolean @default(true)
+  sort_order Int    @default(0)
+
+  @@map("language_ref")
+}
+
+model DisciplineRef {
+  id        String @id
+  label     String
+  active    Boolean @default(true)
+  sort_order Int    @default(0)
+
+  @@map("discipline_ref")
+}
+
+model PreferenceRef {
+  id        String @id
+  label     String
+  active    Boolean @default(true)
+  sort_order Int    @default(0)
+
+  @@map("preference_ref")
+}
+
+model SkillRef {
+  id        String @id
+  label     String
+  active    Boolean @default(true)
+  sort_order Int    @default(0)
+
+  @@map("skill_ref")
+}
+
+// ============================================
+// JUNCTION TABLES
+// ============================================
+
+model MenteeLanguage {
+  user_id String @db.Uuid
+  lang_code String
+
+  @@id([user_id, lang_code])
+  @@map("mentee_languages")
+}
+
+model MenteeInterest {
+  user_id  String @db.Uuid
+  interest String
+  created_at DateTime @default(now())
+
+  @@id([user_id, interest])
+  @@map("mentee_interests")
+}
+
+model MenteePriority {
+  user_id  String @db.Uuid
+  priority String
+  created_at DateTime @default(now())
+
+  @@id([user_id, priority])
+  @@map("mentee_priorities")
+}
+
+model MentorLanguage {
+  user_id   String @db.Uuid
+  lang_code String
+
+  @@id([user_id, lang_code])
+  @@map("mentor_languages")
+}
+
+model MentorCategory {
+  user_id  String @db.Uuid
+  category String
+
+  @@id([user_id, category])
+  @@map("mentor_categories")
+}
+
+model MentorSkill {
+  user_id  String @db.Uuid
+  skill_id String
+
+  @@id([user_id, skill_id])
+  @@map("mentor_skills")
+}
+
+// ============================================
+// CONSENT & COMPLIANCE
+// ============================================
+
+model UserConsent {
+  user_id           String    @id @db.Uuid
+  kvkk_accepted_at  DateTime
+  kvkk_version      String?   @default("v1.0-tr-2025-10-10")
+  ip_address        String?
+  marketing_opt_in  Boolean   @default(false)
+  created_at        DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_consents")
+}

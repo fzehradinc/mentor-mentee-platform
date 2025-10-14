@@ -1,0 +1,490 @@
+openapi: 3.0.3
+info:
+  title: MentorHub - Media Upload API
+  description: Mentor profil medya yükleme sistemi (avatar, cover, video)
+  version: 1.0.0
+  contact:
+    name: MentorHub Media Team
+    email: media@mentorhub.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.mentorhub.com/v1
+    description: Production server
+  - url: https://staging-api.mentorhub.com/v1
+    description: Staging server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token with roles (platform_admin, mentor)
+
+  schemas:
+    UploadUrlRequest:
+      type: object
+      properties:
+        content_type:
+          type: string
+          enum: ["image/jpeg", "image/png", "image/webp", "video/mp4"]
+          example: "image/jpeg"
+        file_size:
+          type: integer
+          minimum: 1
+          maximum: 209715200
+          description: "File size in bytes (max 200MB for video, 5MB for cover, 2MB for avatar)"
+          example: 2048576
+      required:
+        - content_type
+        - file_size
+
+    UploadUrlResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: "Presigned URL for direct file upload"
+          example: "https://s3.amazonaws.com/bucket/mentors/c9b2e8f4/avatar.jpg?X-Amz-Signature=..."
+        expires_at:
+          type: string
+          format: date-time
+          description: "URL expiration time (15 minutes)"
+          example: "2025-10-02T12:15:00Z"
+        upload_id:
+          type: string
+          description: "Unique upload identifier for tracking"
+          example: "upload_c9b2e8f4_avatar_1696248900"
+      required:
+        - upload_url
+        - expires_at
+        - upload_id
+
+    MediaCommitRequest:
+      type: object
+      properties:
+        avatar_url:
+          type: string
+          format: uri
+          description: "Final CDN URL for avatar image"
+          example: "https://cdn.mentorhub.com/avatars/c9b2e8f4.webp"
+        cover_url:
+          type: string
+          format: uri
+          description: "Final CDN URL for cover image"
+          example: "https://cdn.mentorhub.com/covers/c9b2e8f4.webp"
+        video_intro_url:
+          type: string
+          format: uri
+          description: "Final CDN URL for intro video"
+          example: "https://cdn.mentorhub.com/videos/c9b2e8f4.mp4"
+
+    MediaCommitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Media URLs updated successfully"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-10-02T12:00:00Z"
+      required:
+        - success
+        - message
+        - updated_at
+
+    MediaUpload:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "upload_c9b2e8f4_avatar_1696248900"
+        mentor_id:
+          type: string
+          format: uuid
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+        type:
+          type: string
+          enum: ["avatar", "cover", "video"]
+          example: "avatar"
+        storage_url:
+          type: string
+          format: uri
+          example: "https://s3.amazonaws.com/bucket/mentors/c9b2e8f4/avatar.jpg"
+        status:
+          type: string
+          enum: ["initiated", "uploaded", "processed", "failed"]
+          example: "processed"
+        file_size:
+          type: integer
+          example: 2048576
+        content_type:
+          type: string
+          example: "image/jpeg"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-10-02T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-10-02T12:05:00Z"
+      required:
+        - id
+        - mentor_id
+        - type
+        - storage_url
+        - status
+        - created_at
+        - updated_at
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "FILE_TOO_LARGE"
+            message:
+              type: string
+              example: "Avatar file size must be under 2MB"
+            field:
+              type: string
+              example: "file_size"
+          required:
+            - code
+            - message
+
+paths:
+  /mentors/{id}/media/avatar-upload-url:
+    post:
+      summary: Avatar yükleme URL'si al
+      description: Avatar yükleme için presigned URL oluşturur (1:1 aspect ratio, max 2MB)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Mentor UUID"
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+            example:
+              content_type: "image/jpeg"
+              file_size: 2048576
+      responses:
+        '200':
+          description: Upload URL başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+              example:
+                upload_url: "https://s3.amazonaws.com/bucket/mentors/c9b2e8f4/avatar.jpg?X-Amz-Signature=..."
+                expires_at: "2025-10-02T12:15:00Z"
+                upload_id: "upload_c9b2e8f4_avatar_1696248900"
+        '400':
+          description: Invalid file type or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "FILE_TOO_LARGE"
+                  message: "Avatar file size must be under 2MB"
+                  field: "file_size"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not mentor owner
+        '404':
+          description: Mentor not found
+        '415':
+          description: Unsupported media type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "UNSUPPORTED_FORMAT"
+                  message: "Avatar must be jpg, png, or webp"
+                  field: "content_type"
+
+  /mentors/{id}/media/cover-upload-url:
+    post:
+      summary: Cover yükleme URL'si al
+      description: Kapak görseli yükleme için presigned URL oluşturur (16:9 aspect ratio, max 5MB)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+            example:
+              content_type: "image/png"
+              file_size: 4194304
+      responses:
+        '200':
+          description: Upload URL başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Invalid file type or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "FILE_TOO_LARGE"
+                  message: "Cover image must be under 5MB"
+                  field: "file_size"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+        '415':
+          description: Unsupported media type
+
+  /mentors/{id}/media/video-upload-url:
+    post:
+      summary: Video yükleme URL'si al
+      description: Tanıtım videosu yükleme için presigned URL oluşturur (mp4, max 200MB, 15s-120s)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+            example:
+              content_type: "video/mp4"
+              file_size: 52428800
+      responses:
+        '200':
+          description: Upload URL başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Invalid file type or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "FILE_TOO_LARGE"
+                  message: "Video file must be under 200MB"
+                  field: "file_size"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+        '415':
+          description: Unsupported media type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "UNSUPPORTED_FORMAT"
+                  message: "Video must be mp4 format"
+                  field: "content_type"
+
+  /mentors/{id}/media/commit:
+    patch:
+      summary: Medya URL'lerini profile kaydet
+      description: Yüklenen medya dosyalarının final URL'lerini mentor profiline kaydeder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaCommitRequest'
+            example:
+              avatar_url: "https://cdn.mentorhub.com/avatars/c9b2e8f4.webp"
+              cover_url: "https://cdn.mentorhub.com/covers/c9b2e8f4.webp"
+              video_intro_url: "https://cdn.mentorhub.com/videos/c9b2e8f4.mp4"
+      responses:
+        '200':
+          description: Media URL'leri başarıyla kaydedildi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaCommitResponse'
+              example:
+                success: true
+                message: "Media URLs updated successfully"
+                updated_at: "2025-10-02T12:00:00Z"
+        '400':
+          description: Invalid URLs or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INVALID_URL"
+                  message: "Avatar URL is not accessible"
+                  field: "avatar_url"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/media/uploads:
+    get:
+      summary: Medya yükleme geçmişi
+      description: Mentor için tüm medya yükleme kayıtlarını listeler
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["avatar", "cover", "video"]
+          description: "Medya tipi filtresi"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["initiated", "uploaded", "processed", "failed"]
+          description: "Durum filtresi"
+      responses:
+        '200':
+          description: Medya yükleme geçmişi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploads:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MediaUpload'
+                  total:
+                    type: integer
+                    example: 5
+              example:
+                uploads:
+                  - id: "upload_c9b2e8f4_avatar_1696248900"
+                    mentor_id: "c9b2e8f4-1234-5678-9abc-def012345678"
+                    type: "avatar"
+                    storage_url: "https://s3.amazonaws.com/bucket/mentors/c9b2e8f4/avatar.jpg"
+                    status: "processed"
+                    file_size: 2048576
+                    content_type: "image/jpeg"
+                    created_at: "2025-10-02T12:00:00Z"
+                    updated_at: "2025-10-02T12:05:00Z"
+                total: 1
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/media/uploads/{upload_id}:
+    delete:
+      summary: Medya yükleme kaydını sil
+      description: Belirli bir medya yükleme kaydını ve dosyasını siler
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: upload_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "upload_c9b2e8f4_avatar_1696248900"
+      responses:
+        '204':
+          description: Medya başarıyla silindi
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Upload not found
+
+tags:
+  - name: Media Upload
+    description: Mentor profil medya yükleme işlemleri
+  - name: Media Management
+    description: Medya dosya yönetimi

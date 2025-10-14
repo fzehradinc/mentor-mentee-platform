@@ -1,0 +1,1098 @@
+openapi: 3.0.3
+info:
+  title: MentorHub - Mentor Profile API
+  description: Mentor profil yönetimi için API endpoints
+  version: 1.0.0
+  contact:
+    name: MentorHub API Team
+    email: api@mentorhub.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.mentorhub.com/v1
+    description: Production server
+  - url: https://staging-api.mentorhub.com/v1
+    description: Staging server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token with roles (platform_admin, mentor)
+
+  schemas:
+    Location:
+      type: object
+      properties:
+        country:
+          type: string
+          example: "TR"
+        city:
+          type: string
+          example: "İstanbul"
+      required:
+        - country
+        - city
+
+    TimeSlot:
+      type: object
+      properties:
+        day_of_week:
+          type: integer
+          minimum: 0
+          maximum: 6
+          description: "0=Pazar, 1=Pazartesi, ..., 6=Cumartesi"
+        start:
+          type: string
+          pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+          example: "19:00"
+        end:
+          type: string
+          pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+          example: "22:00"
+      required:
+        - day_of_week
+        - start
+        - end
+
+    Package:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "3 seans paketi"
+        sessions:
+          type: integer
+          minimum: 2
+          maximum: 10
+        discount_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 10.5
+      required:
+        - name
+        - sessions
+        - discount_pct
+
+    VerifiedFlags:
+      type: object
+      properties:
+        identity:
+          type: boolean
+          default: false
+        company:
+          type: boolean
+          default: false
+
+    Stats:
+      type: object
+      properties:
+        total_hours:
+          type: integer
+          minimum: 0
+        workshops_count:
+          type: integer
+          minimum: 0
+        completed_mentees_count:
+          type: integer
+          minimum: 0
+
+    Mentor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "Ayşe Kılıç"
+        title:
+          type: string
+          minLength: 2
+          maxLength: 60
+          example: "Senior UX Designer"
+        company_name:
+          type: string
+          nullable: true
+          example: "Getir"
+        short_bio:
+          type: string
+          minLength: 80
+          maxLength: 160
+          example: "Kullanıcı odaklı tasarımla kariyerini hızlandırmana yardım ederim."
+        long_bio:
+          type: string
+          minLength: 400
+          maxLength: 1200
+          nullable: true
+        primary_category:
+          type: string
+          enum: [product, design, software, data_ai, marketing, leadership, entrepreneurship]
+          example: "design"
+        skills:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+          example: ["UX Research", "Figma", "Portfolio Review"]
+        experience_years:
+          type: integer
+          minimum: 0
+          maximum: 50
+          example: 7
+        languages:
+          type: array
+          items:
+            type: string
+          example: ["Türkçe", "İngilizce"]
+        location:
+          $ref: '#/components/schemas/Location'
+        timezone:
+          type: string
+          example: "Europe/Istanbul"
+        availability_pattern:
+          type: string
+          enum: [weekday_evening, weekend, flex]
+          example: "weekday_evening"
+        time_slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlot'
+          maxItems: 50
+        session_duration_minutes:
+          type: integer
+          enum: [30, 45, 60]
+          example: 60
+        meeting_pref:
+          type: string
+          enum: [video_meet, in_platform, flex]
+          example: "video_meet"
+        price_per_session:
+          type: number
+          minimum: 100.00
+          multipleOf: 0.01
+          example: 180.00
+        first_session_discount:
+          type: boolean
+          default: false
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Package'
+          maxItems: 2
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        cover_url:
+          type: string
+          format: uri
+          nullable: true
+        video_intro_url:
+          type: string
+          format: uri
+          nullable: true
+        badges:
+          type: array
+          items:
+            type: string
+          example: ["verified", "high_rated"]
+        verified_flags:
+          $ref: '#/components/schemas/VerifiedFlags'
+        rating_avg:
+          type: number
+          minimum: 0
+          maximum: 5
+          multipleOf: 0.1
+          example: 4.9
+        stats:
+          $ref: '#/components/schemas/Stats'
+        publish_status:
+          type: string
+          enum: [draft, review, published]
+          example: "published"
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+          minLength: 3
+          maxLength: 60
+          example: "ayse-kilic-ux"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - display_name
+        - title
+        - short_bio
+        - primary_category
+        - languages
+        - timezone
+        - price_per_session
+        - publish_status
+        - created_at
+        - updated_at
+
+    MentorDraft:
+      type: object
+      description: "Partial mentor data for autosave"
+      properties:
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 50
+        title:
+          type: string
+          minLength: 2
+          maxLength: 60
+        company_name:
+          type: string
+        short_bio:
+          type: string
+          minLength: 80
+          maxLength: 160
+        long_bio:
+          type: string
+          minLength: 400
+          maxLength: 1200
+        primary_category:
+          type: string
+          enum: [product, design, software, data_ai, marketing, leadership, entrepreneurship]
+        skills:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        experience_years:
+          type: integer
+          minimum: 0
+          maximum: 50
+        languages:
+          type: array
+          items:
+            type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        timezone:
+          type: string
+        availability_pattern:
+          type: string
+          enum: [weekday_evening, weekend, flex]
+        time_slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlot'
+          maxItems: 50
+        session_duration_minutes:
+          type: integer
+          enum: [30, 45, 60]
+        meeting_pref:
+          type: string
+          enum: [video_meet, in_platform, flex]
+        price_per_session:
+          type: number
+          minimum: 100.00
+          multipleOf: 0.01
+        first_session_discount:
+          type: boolean
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Package'
+          maxItems: 2
+        avatar_url:
+          type: string
+          format: uri
+        cover_url:
+          type: string
+          format: uri
+        video_intro_url:
+          type: string
+          format: uri
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "short_bio min 80"
+            field:
+              type: string
+              example: "short_bio"
+          required:
+            - code
+            - message
+
+    UploadUrl:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: "Presigned URL for file upload"
+        expires_at:
+          type: string
+          format: date-time
+          description: "URL expiration time"
+      required:
+        - upload_url
+        - expires_at
+
+paths:
+  /mentors:
+    post:
+      summary: Yeni mentor profili oluştur
+      description: Yeni mentor taslağı oluşturur (draft status)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                title:
+                  type: string
+                  minLength: 2
+                  maxLength: 60
+                short_bio:
+                  type: string
+                  minLength: 80
+                  maxLength: 160
+                primary_category:
+                  type: string
+                  enum: [product, design, software, data_ai, marketing, leadership, entrepreneurship]
+                languages:
+                  type: array
+                  items:
+                    type: string
+                timezone:
+                  type: string
+              required:
+                - display_name
+                - title
+                - short_bio
+                - primary_category
+                - languages
+                - timezone
+            example:
+              display_name: "Ayşe Kılıç"
+              title: "Senior UX Designer"
+              short_bio: "Kullanıcı odaklı tasarımla kariyerini hızlandırmana yardım ederim."
+              primary_category: "design"
+              languages: ["Türkçe", "İngilizce"]
+              timezone: "Europe/Istanbul"
+      responses:
+        '201':
+          description: Mentor profili başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}:
+    get:
+      summary: Mentor profili getir
+      description: Public mentor profili (sadece published)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Mentor profili
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '404':
+          description: Mentor bulunamadı veya yayınlanmamış
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Mentor profilini güncelle
+      description: Mentor profil alanlarını günceller (sadece sahip veya admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentorDraft'
+            example:
+              short_bio: "Ürün odaklı düşünme ve portföy koçluğu sunarım."
+              skills: ["UX Research", "Portfolio Review", "Figma"]
+              price_per_session: 200.00
+      responses:
+        '200':
+          description: Profil başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - sadece sahip veya admin
+        '404':
+          description: Mentor bulunamadı
+
+    delete:
+      summary: Mentor profilini kalıcı olarak sil
+      description: Hard delete - sadece admin (KVKK uyumu için)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Profil başarıyla silindi
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - sadece admin
+        '404':
+          description: Mentor bulunamadı
+
+  /mentors/{id}/draft:
+    patch:
+      summary: Taslak güncelle (autosave)
+      description: Partial update için autosave endpoint
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentorDraft'
+            example:
+              display_name: "Ayşe Kılıç"
+              skills: ["UX Research", "Figma"]
+      responses:
+        '200':
+          description: Taslak kaydedildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Draft saved successfully"
+                  updated_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}/submit:
+    post:
+      summary: Review'a gönder
+      description: Mentor profilini inceleme için gönderir
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Profil review'a gönderildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile submitted for review"
+                  publish_status:
+                    type: string
+                    example: "review"
+        '400':
+          description: Profil eksik veya hatalı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor bulunamadı
+
+  /mentors/{id}/publish:
+    post:
+      summary: Profili yayınla
+      description: Mentor profilini yayınlar ve slug oluşturur (sadece admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                custom_slug:
+                  type: string
+                  pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+                  minLength: 3
+                  maxLength: 60
+                  description: "Özel slug (opsiyonel, otomatik oluşturulur)"
+            example:
+              custom_slug: "ayse-kilic-ux-designer"
+      responses:
+        '200':
+          description: Profil başarıyla yayınlandı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile published successfully"
+                  slug:
+                    type: string
+                    example: "ayse-kilic-ux"
+                  public_url:
+                    type: string
+                    format: uri
+                    example: "https://mentorhub.com/mentors/ayse-kilic-ux"
+        '400':
+          description: Profil eksik veya slug çakışması
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - sadece admin
+        '404':
+          description: Mentor bulunamadı
+        '409':
+          description: Slug already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "SLUG_DUPLICATE"
+                  message: "Slug already exists"
+                  field: "slug"
+
+  /mentors/{id}/unpublish:
+    post:
+      summary: Yayından kaldır
+      description: Profili draft durumuna geri alır (sadece admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Profil yayından kaldırıldı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile unpublished"
+                  publish_status:
+                    type: string
+                    example: "draft"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - sadece admin
+        '404':
+          description: Mentor bulunamadı
+
+  /mentors/{id}/media/avatar-upload-url:
+    post:
+      summary: Avatar upload URL al
+      description: Avatar yükleme için presigned URL oluşturur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_type:
+                  type: string
+                  enum: ["image/jpeg", "image/png", "image/webp"]
+                file_size:
+                  type: integer
+                  maximum: 10485760
+                  description: "Max 10MB"
+              required:
+                - content_type
+                - file_size
+            example:
+              content_type: "image/jpeg"
+              file_size: 2048576
+      responses:
+        '200':
+          description: Upload URL oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrl'
+        '400':
+          description: Invalid file type or size
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}/media/cover-upload-url:
+    post:
+      summary: Cover upload URL al
+      description: Kapak fotoğrafı yükleme için presigned URL oluşturur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_type:
+                  type: string
+                  enum: ["image/jpeg", "image/png", "image/webp"]
+                file_size:
+                  type: integer
+                  maximum: 20971520
+                  description: "Max 20MB"
+              required:
+                - content_type
+                - file_size
+      responses:
+        '200':
+          description: Upload URL oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrl'
+        '400':
+          description: Invalid file type or size
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}/media/video-upload-url:
+    post:
+      summary: Video upload URL al
+      description: Tanıtım videosu yükleme için presigned URL oluşturur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_type:
+                  type: string
+                  enum: ["video/mp4", "video/webm"]
+                file_size:
+                  type: integer
+                  maximum: 209715200
+                  description: "Max 200MB"
+              required:
+                - content_type
+                - file_size
+      responses:
+        '200':
+          description: Upload URL oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrl'
+        '400':
+          description: Invalid file type or size
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}/media/commit:
+    patch:
+      summary: Media URL'lerini profile yaz
+      description: Yüklenen medya URL'lerini mentor profiline kaydeder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                avatar_url:
+                  type: string
+                  format: uri
+                cover_url:
+                  type: string
+                  format: uri
+                video_intro_url:
+                  type: string
+                  format: uri
+            example:
+              avatar_url: "https://cdn.mentorhub.com/avatars/c9b2e8f4.webp"
+              cover_url: "https://cdn.mentorhub.com/covers/c9b2e8f4.webp"
+      responses:
+        '200':
+          description: Media URL'leri kaydedildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Media URLs updated successfully"
+        '400':
+          description: Invalid URLs
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}/availability:
+    put:
+      summary: Müsaitlik bilgilerini güncelle
+      description: Mentor müsaitlik ve zaman aralıklarını günceller
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                availability_pattern:
+                  type: string
+                  enum: [weekday_evening, weekend, flex]
+                time_slots:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TimeSlot'
+                  maxItems: 50
+                session_duration_minutes:
+                  type: integer
+                  enum: [30, 45, 60]
+                meeting_pref:
+                  type: string
+                  enum: [video_meet, in_platform, flex]
+              required:
+                - availability_pattern
+                - session_duration_minutes
+                - meeting_pref
+            example:
+              availability_pattern: "weekday_evening"
+              time_slots:
+                - day_of_week: 2
+                  start: "19:00"
+                  end: "22:00"
+                - day_of_week: 4
+                  start: "19:00"
+                  end: "21:00"
+              session_duration_minutes: 60
+              meeting_pref: "video_meet"
+      responses:
+        '200':
+          description: Müsaitlik güncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Availability updated successfully"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /mentors/{id}/pricing:
+    put:
+      summary: Fiyatlandırma bilgilerini güncelle
+      description: Mentor ücret ve paket bilgilerini günceller
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price_per_session:
+                  type: number
+                  minimum: 100.00
+                  multipleOf: 0.01
+                first_session_discount:
+                  type: boolean
+                packages:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Package'
+                  maxItems: 2
+              required:
+                - price_per_session
+            example:
+              price_per_session: 180.00
+              first_session_discount: true
+              packages:
+                - name: "3 seans paketi"
+                  sessions: 3
+                  discount_pct: 10
+      responses:
+        '200':
+          description: Fiyatlandırma güncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Pricing updated successfully"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /public/mentors/{slug}:
+    get:
+      summary: Public mentor profili (slug ile)
+      description: Yayınlanmış mentor profilini slug ile getirir
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+            example: "ayse-kilic-ux"
+      responses:
+        '200':
+          description: Public mentor profili
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+              example:
+                id: "c9b2e8f4-1234-5678-9abc-def012345678"
+                display_name: "Ayşe Kılıç"
+                title: "Senior UX Designer"
+                company_name: "Getir"
+                short_bio: "Kullanıcı odaklı tasarımla kariyerini hızlandırmana yardım ederim."
+                long_bio: "8 yıldır UX alanında çalışıyorum..."
+                primary_category: "design"
+                skills: ["UX Research", "Figma", "Portfolio Review"]
+                experience_years: 7
+                languages: ["Türkçe", "İngilizce"]
+                location:
+                  country: "TR"
+                  city: "İstanbul"
+                timezone: "Europe/Istanbul"
+                availability_pattern: "weekday_evening"
+                time_slots:
+                  - day_of_week: 2
+                    start: "19:00"
+                    end: "22:00"
+                session_duration_minutes: 60
+                meeting_pref: "video_meet"
+                price_per_session: 180.00
+                first_session_discount: true
+                packages:
+                  - name: "3 seans paketi"
+                    sessions: 3
+                    discount_pct: 10
+                avatar_url: "https://cdn.mentorhub.com/avatars/c9b2e8f4.webp"
+                cover_url: "https://cdn.mentorhub.com/covers/c9b2e8f4.webp"
+                video_intro_url: null
+                badges: ["verified", "high_rated"]
+                verified_flags:
+                  identity: true
+                  company: true
+                rating_avg: 4.9
+                stats:
+                  total_hours: 320
+                  workshops_count: 12
+                  completed_mentees_count: 180
+                publish_status: "published"
+                slug: "ayse-kilic-ux"
+                created_at: "2025-10-02T10:00:00Z"
+                updated_at: "2025-10-02T11:00:00Z"
+        '404':
+          description: Mentor bulunamadı veya yayınlanmamış
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "NOT_FOUND"
+                  message: "Mentor not found or not published"

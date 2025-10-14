@@ -1,0 +1,376 @@
+[
+  {
+    "id": "deloitte_consultant_zeynep",
+    "name": "Zeynep Demir",
+    "title": "Senior Consultant",
+    "company": "Deloitte",
+    "rating": 4.9,
+    "totalReviews": 24,
+    "yearsOfExperience": 6,
+    "imageUrl": "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["Case Interview", "Business Strategy", "Data Analytics"],
+    "location": "İstanbul, TR",
+    "hourlyRate": 280,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["hedef-sirket", "mulakat-case", "kariyer-gecis"],
+      "domains": ["danismanlik", "is-analizi"],
+      "companies": ["deloitte", "pwc", "kpmg"],
+      "positions": ["consultant", "business-analyst"],
+      "interviews": ["case-interview", "guesstimate", "behavioral-star"],
+      "locations": ["turkiye", "istanbul", "gmt+3"],
+      "languages": ["tr", "en"],
+      "universities": ["bogazici"],
+      "mentoringStyle": ["mock-interview", "paket-4"]
+    },
+    "badges": ["top-mentor", "verified", "kurumsal-deneyim"],
+    "successMetrics": {
+      "placements": ["deloitte", "pwc", "bcg"],
+      "acceptances": 18,
+      "awards": []
+    },
+    "availability": {
+      "is48hAvailable": true,
+      "weeknights": true,
+      "weekendOnly": false,
+      "flexCancellation": true
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "2 seans/ay (45dk/seans)",
+        "qa": "Sınırsız mesajlaşma",
+        "response": "24 saat içinde yanıt",
+        "support": "Case çalışmaları + Mock interview"
+      }
+    }
+  },
+  {
+    "id": "canada_phd_mert",
+    "name": "Mert Özkan",
+    "title": "PhD Candidate & Research Assistant",
+    "company": "University of Toronto",
+    "rating": 5.0,
+    "totalReviews": 16,
+    "yearsOfExperience": 4,
+    "imageUrl": "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["Graduate Applications", "SoP Writing", "Research Methods", "IELTS"],
+    "location": "Toronto, Kanada",
+    "hourlyRate": 220,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["ms-phd-basvuru", "sop-draft", "lor-taktikleri", "burs-basvurusu", "akademik-danismanlik"],
+      "domains": ["stem-akademi", "ielts"],
+      "companies": [],
+      "positions": ["researcher"],
+      "interviews": ["resume-review"],
+      "locations": ["kanada"],
+      "languages": ["tr", "en"],
+      "universities": ["toronto", "odtu"],
+      "mentoringStyle": ["doc-review", "paket-8"]
+    },
+    "badges": ["verified", "akademik-yayin", "yuksek-kabul"],
+    "successMetrics": {
+      "placements": [],
+      "acceptances": 23,
+      "awards": ["Q1 dergi yayını"]
+    },
+    "availability": {
+      "is48hAvailable": false,
+      "weeknights": false,
+      "weekendOnly": true,
+      "flexCancellation": false
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "4 seans/ay (30dk/seans)",
+        "qa": "Doküman incelemesi",
+        "response": "48 saat içinde yanıt",
+        "support": "SoP/LoR düzenleme + Burs araştırması"
+      }
+    }
+  },
+  {
+    "id": "google_swe_ayse",
+    "name": "Ayşe Kara",
+    "title": "Senior Software Engineer",
+    "company": "Google",
+    "rating": 4.8,
+    "totalReviews": 31,
+    "yearsOfExperience": 8,
+    "imageUrl": "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["System Design", "Algorithms", "Python", "Backend Development"],
+    "location": "Londra, UK",
+    "hourlyRate": 350,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["hedef-sirket", "mulakat-teknik"],
+      "domains": ["yazilim", "data-science"],
+      "companies": ["google", "amazon", "microsoft"],
+      "positions": ["software-engineer"],
+      "interviews": ["system-design", "coding-interview"],
+      "locations": ["avrupa"],
+      "languages": ["tr", "en"],
+      "universities": ["itu"],
+      "techStack": ["python", "java", "sql"],
+      "mentoringStyle": ["mock-interview"]
+    },
+    "badges": ["top-mentor", "verified", "kurumsal-deneyim"],
+    "successMetrics": {
+      "placements": ["google", "amazon", "meta"],
+      "acceptances": 12,
+      "awards": []
+    },
+    "availability": {
+      "is48hAvailable": false,
+      "weeknights": true,
+      "weekendOnly": false,
+      "flexCancellation": true
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "2 seans/ay (60dk/seans)",
+        "qa": "Kod incelemesi",
+        "response": "24 saat içinde yanıt",
+        "support": "Sistem tasarımı + Algoritma hazırlığı"
+      }
+    }
+  },
+  {
+    "id": "mckinsey_ba_burak",
+    "name": "Burak Yılmaz",
+    "title": "Business Analyst",
+    "company": "McKinsey & Company",
+    "rating": 5.0,
+    "totalReviews": 19,
+    "yearsOfExperience": 5,
+    "imageUrl": "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["Case Interview", "Market Sizing", "Consulting", "Excel Modeling"],
+    "location": "İstanbul, TR",
+    "hourlyRate": 320,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["hedef-sirket", "mulakat-case"],
+      "domains": ["danismanlik"],
+      "companies": ["mckinsey", "bcg", "deloitte"],
+      "positions": ["consultant", "business-analyst"],
+      "interviews": ["case-interview", "guesstimate"],
+      "locations": ["turkiye", "istanbul"],
+      "languages": ["tr", "en"],
+      "universities": ["bogazici"],
+      "mentoringStyle": ["mock-interview", "paket-4"]
+    },
+    "badges": ["top-mentor", "verified", "kurumsal-deneyim"],
+    "successMetrics": {
+      "placements": ["mckinsey", "bcg", "bain"],
+      "acceptances": 14,
+      "awards": []
+    },
+    "availability": {
+      "is48hAvailable": true,
+      "weeknights": true,
+      "weekendOnly": false,
+      "flexCancellation": false
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "4 seans/ay (40dk/seans)",
+        "qa": "Sınırsız case çalışmaları",
+        "response": "24 saat içinde yanıt",
+        "support": "Case prep + Market sizing eğitimi"
+      }
+    }
+  },
+  {
+    "id": "aselsan_pm_elif",
+    "name": "Elif Şahin",
+    "title": "Product Manager",
+    "company": "ASELSAN",
+    "rating": 4.7,
+    "totalReviews": 28,
+    "yearsOfExperience": 7,
+    "imageUrl": "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["Product Management", "Agile", "Roadmapping", "Defense Tech"],
+    "location": "Ankara, TR",
+    "hourlyRate": 200,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["kariyer-gecis"],
+      "domains": ["urun-yonetimi"],
+      "companies": ["aselsan", "roketsan", "tusas"],
+      "positions": ["product-manager"],
+      "interviews": ["behavioral-star", "resume-review"],
+      "locations": ["turkiye", "ankara"],
+      "languages": ["tr", "en"],
+      "universities": ["odtu"],
+      "mentoringStyle": ["haftalik-takip"]
+    },
+    "badges": ["verified", "kurumsal-deneyim"],
+    "successMetrics": {
+      "placements": ["aselsan", "roketsan"],
+      "acceptances": 9,
+      "awards": []
+    },
+    "availability": {
+      "is48hAvailable": false,
+      "weeknights": true,
+      "weekendOnly": false,
+      "flexCancellation": true
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "2 seans/ay (45dk/seans)",
+        "qa": "Ürün dokümanı incelemesi",
+        "response": "48 saat içinde yanıt",
+        "support": "Roadmap + Agile koçluğu"
+      }
+    }
+  },
+  {
+    "id": "germany_phd_canan",
+    "name": "Canan Arslan",
+    "title": "Postdoctoral Researcher",
+    "company": "TU Munich",
+    "rating": 4.9,
+    "totalReviews": 21,
+    "yearsOfExperience": 6,
+    "imageUrl": "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["PhD Applications", "Mechanical Engineering", "Research Proposals", "German System"],
+    "location": "Münih, Almanya",
+    "hourlyRate": 180,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["ms-phd-basvuru", "sop-draft", "lor-taktikleri", "akademik-danismanlik"],
+      "domains": ["stem-akademi"],
+      "companies": [],
+      "positions": ["researcher"],
+      "interviews": [],
+      "locations": ["almanya", "avrupa"],
+      "languages": ["tr", "en", "de"],
+      "universities": ["tum", "odtu"],
+      "mentoringStyle": ["doc-review"]
+    },
+    "badges": ["verified", "akademik-yayin"],
+    "successMetrics": {
+      "placements": [],
+      "acceptances": 17,
+      "awards": ["IEEE yayını"]
+    },
+    "availability": {
+      "is48hAvailable": false,
+      "weeknights": false,
+      "weekendOnly": true,
+      "flexCancellation": false
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "2 seans/ay (30dk/seans)",
+        "qa": "Research proposal incelemesi",
+        "response": "72 saat içinde yanıt",
+        "support": "Almanya başvuru rehberliği"
+      }
+    }
+  },
+  {
+    "id": "probono_volunteer",
+    "name": "Can Demir",
+    "title": "Senior Data Scientist",
+    "company": "Freelance",
+    "rating": 4.6,
+    "totalReviews": 8,
+    "yearsOfExperience": 5,
+    "imageUrl": "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["Data Science", "Python", "Machine Learning", "Career Transition"],
+    "location": "İzmir, TR",
+    "hourlyRate": 0,
+    "isVolunteer": true,
+    "facets": {
+      "goals": ["kariyer-gecis"],
+      "domains": ["data-science", "ml-ai"],
+      "companies": [],
+      "positions": ["data-engineer"],
+      "interviews": [],
+      "locations": ["turkiye"],
+      "languages": ["tr"],
+      "universities": ["itu"],
+      "techStack": ["python", "sql", "pytorch"]
+    },
+    "badges": ["verified"],
+    "successMetrics": {
+      "placements": [],
+      "acceptances": 5,
+      "awards": []
+    },
+    "availability": {
+      "is48hAvailable": false,
+      "weeknights": false,
+      "weekendOnly": true,
+      "flexCancellation": true
+    },
+    "pricing": {
+      "currency": "₺",
+      "packageOptions": {
+        "calls": "1 seans/ay (30dk/seans)",
+        "qa": "Email desteği",
+        "response": "1 hafta içinde yanıt",
+        "support": "Kariyer danışmanlığı (gönüllü)"
+      }
+    }
+  },
+  {
+    "id": "bloomberg_quant",
+    "name": "Alex Thompson",
+    "title": "Quantitative Analyst",
+    "company": "Bloomberg",
+    "rating": 4.8,
+    "totalReviews": 14,
+    "yearsOfExperience": 9,
+    "imageUrl": "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400",
+    "expertiseAreas": ["Quantitative Finance", "Python", "C++", "Trading Systems", "Interview Prep"],
+    "location": "New York, USA",
+    "hourlyRate": 420,
+    "isVolunteer": false,
+    "facets": {
+      "goals": ["hedef-sirket", "mulakat-teknik"],
+      "domains": ["finans", "yazilim"],
+      "companies": ["bloomberg", "goldman"],
+      "positions": ["data-engineer"],
+      "interviews": ["coding-interview", "system-design"],
+      "locations": ["mena"],
+      "languages": ["en"],
+      "universities": ["mit"],
+      "techStack": ["python", "sql"],
+      "mentoringStyle": ["mock-interview"]
+    },
+    "badges": ["top-mentor", "kurumsal-deneyim"],
+    "successMetrics": {
+      "placements": ["bloomberg", "goldman"],
+      "acceptances": 8,
+      "awards": []
+    },
+    "availability": {
+      "is48hAvailable": false,
+      "weeknights": false,
+      "weekendOnly": true,
+      "flexCancellation": false
+    },
+    "pricing": {
+      "currency": "$",
+      "packageOptions": {
+        "calls": "1 seans/ay (60dk/seans)",
+        "qa": "Code review",
+        "response": "48 saat içinde yanıt",
+        "support": "Quant interview hazırlığı"
+      }
+    }
+  }
+]
+
+
+
+

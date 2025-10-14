@@ -1,0 +1,860 @@
+openapi: 3.0.3
+info:
+  title: MentorHub - Verification & Moderation API
+  description: Mentor profil doğrulama ve moderasyon sistemi
+  version: 1.0.0
+  contact:
+    name: MentorHub Verification Team
+    email: verification@mentorhub.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.mentorhub.com/v1
+    description: Production server
+  - url: https://staging-api.mentorhub.com/v1
+    description: Staging server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token with roles (platform_admin, mentor)
+
+  schemas:
+    Badge:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "badge_123e4567-e89b-12d3-a456-426614174000"
+        mentor_id:
+          type: string
+          format: uuid
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+        badge_type:
+          type: string
+          enum: [verified, high_rated, workshop_leader, top_mentor, expert, rising_star]
+          example: "verified"
+        granted_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        auto_granted:
+          type: boolean
+          description: "Otomatik kurallara göre verildi mi?"
+          example: true
+      required:
+        - id
+        - mentor_id
+        - badge_type
+        - granted_at
+
+    BadgeApplication:
+      type: object
+      properties:
+        badge_type:
+          type: string
+          enum: [verified, high_rated, workshop_leader, top_mentor, expert, rising_star]
+          example: "high_rated"
+        justification:
+          type: string
+          maxLength: 500
+          description: "Rozet için gerekçe (opsiyonel)"
+          example: "4.9 rating ve 50+ başarılı seans"
+      required:
+        - badge_type
+
+    CompanyVerification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "comp_123e4567-e89b-12d3-a456-426614174000"
+        mentor_id:
+          type: string
+          format: uuid
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+        company_name:
+          type: string
+          maxLength: 100
+          example: "Getir"
+        tax_id:
+          type: string
+          maxLength: 20
+          example: "1234567890"
+        website:
+          type: string
+          format: uri
+          example: "https://getir.com"
+        logo_url:
+          type: string
+          format: uri
+          example: "https://cdn.mentorhub.com/company-logos/getir.png"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: "pending"
+        rejection_reason:
+          type: string
+          maxLength: 500
+          example: "Vergi numarası doğrulanamadı"
+        verified_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:00:00Z"
+      required:
+        - id
+        - mentor_id
+        - company_name
+        - status
+        - created_at
+
+    KYCUpload:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "kyc_123e4567-e89b-12d3-a456-426614174000"
+        mentor_id:
+          type: string
+          format: uuid
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+        id_front_url:
+          type: string
+          format: uri
+          example: "https://secure.mentorhub.com/kyc/id-front-encrypted.jpg"
+        id_back_url:
+          type: string
+          format: uri
+          example: "https://secure.mentorhub.com/kyc/id-back-encrypted.jpg"
+        selfie_url:
+          type: string
+          format: uri
+          example: "https://secure.mentorhub.com/kyc/selfie-encrypted.jpg"
+        status:
+          type: string
+          enum: [pending, processing, verified, rejected]
+          example: "pending"
+        provider_response:
+          type: object
+          description: "3rd party KYC provider response"
+        rejection_reason:
+          type: string
+          maxLength: 500
+          example: "Kimlik belgesi net değil"
+        verified_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          description: "KYC belgeleri otomatik silinme tarihi (30 gün)"
+          example: "2025-02-14T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:00:00Z"
+      required:
+        - id
+        - mentor_id
+        - status
+        - created_at
+        - expires_at
+
+    UploadUrl:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: "Presigned URL for file upload"
+          example: "https://s3.amazonaws.com/bucket/kyc/mentor123/id-front.jpg?X-Amz-Signature=..."
+        expires_at:
+          type: string
+          format: date-time
+          description: "URL expiration time (15 minutes)"
+          example: "2025-01-15T10:45:00Z"
+        upload_id:
+          type: string
+          description: "Unique upload identifier"
+          example: "upload_kyc_mentor123_1642248900"
+      required:
+        - upload_url
+        - expires_at
+        - upload_id
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "BADGE_NOT_ELIGIBLE"
+            message:
+              type: string
+              example: "Mentor does not meet requirements for this badge"
+            field:
+              type: string
+              example: "badge_type"
+          required:
+            - code
+            - message
+
+paths:
+  /mentors/{id}/badges:
+    get:
+      summary: Mentor rozetlerini getir
+      description: Mentor'un sahip olduğu tüm rozetleri listeler
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Mentor UUID"
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+      responses:
+        '200':
+          description: Mentor rozetleri
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  badges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Badge'
+                  eligible_badges:
+                    type: array
+                    items:
+                      type: string
+                    description: "Kazanılabilir rozetler"
+                    example: ["workshop_leader", "expert"]
+              example:
+                badges:
+                  - id: "badge_123e4567-e89b-12d3-a456-426614174000"
+                    mentor_id: "c9b2e8f4-1234-5678-9abc-def012345678"
+                    badge_type: "verified"
+                    granted_at: "2025-01-15T10:30:00Z"
+                    auto_granted: true
+                eligible_badges: ["workshop_leader", "expert"]
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+    post:
+      summary: Rozet başvurusu yap
+      description: Belirli bir rozet için başvuru yapar (otomatik kontrol + admin onayı)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BadgeApplication'
+            example:
+              badge_type: "workshop_leader"
+              justification: "3 workshop düzenledim ve 50+ katılımcı eğittim"
+      responses:
+        '201':
+          description: Rozet başvurusu oluşturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Badge application submitted for review"
+                  auto_granted:
+                    type: boolean
+                    example: false
+                  review_time:
+                    type: string
+                    example: "2-5 business days"
+        '400':
+          description: Geçersiz rozet türü veya koşullar sağlanmıyor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "BADGE_NOT_ELIGIBLE"
+                  message: "Mentor does not meet requirements for workshop_leader badge"
+                  field: "badge_type"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/company/verify:
+    post:
+      summary: Şirket doğrulama başvurusu
+      description: Mentor'un şirket bilgilerini doğrulama için gönderir
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company_name:
+                  type: string
+                  maxLength: 100
+                  example: "Getir"
+                tax_id:
+                  type: string
+                  maxLength: 20
+                  example: "1234567890"
+                website:
+                  type: string
+                  format: uri
+                  example: "https://getir.com"
+                logo_url:
+                  type: string
+                  format: uri
+                  example: "https://cdn.mentorhub.com/company-logos/getir.png"
+                position_proof:
+                  type: string
+                  description: "Pozisyon kanıtı (LinkedIn, iş sözleşmesi vb.)"
+                  example: "https://linkedin.com/in/mentor-profile"
+              required:
+                - company_name
+                - tax_id
+            example:
+              company_name: "Getir"
+              tax_id: "1234567890"
+              website: "https://getir.com"
+              logo_url: "https://cdn.mentorhub.com/company-logos/getir.png"
+              position_proof: "https://linkedin.com/in/ayse-kilic"
+      responses:
+        '201':
+          description: Şirket doğrulama başvurusu oluşturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verification_id:
+                    type: string
+                    format: uuid
+                    example: "comp_123e4567-e89b-12d3-a456-426614174000"
+                  message:
+                    type: string
+                    example: "Company verification request submitted"
+                  review_time:
+                    type: string
+                    example: "3-7 business days"
+                  status:
+                    type: string
+                    example: "pending"
+        '400':
+          description: Geçersiz şirket bilgileri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+    get:
+      summary: Şirket doğrulama durumu
+      description: Mentor'un şirket doğrulama durumunu getir
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Şirket doğrulama durumu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyVerification'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Verification not found
+
+  /mentors/{id}/kyc/upload-urls:
+    post:
+      summary: KYC belge yükleme URL'leri al
+      description: Kimlik doğrulama belgeleri için presigned URL'ler oluşturur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documents:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [id_front, id_back, selfie]
+                      content_type:
+                        type: string
+                        enum: ["image/jpeg", "image/png", "application/pdf"]
+                      file_size:
+                        type: integer
+                        maximum: 5242880
+                        description: "Max 5MB"
+                    required:
+                      - type
+                      - content_type
+                      - file_size
+              required:
+                - documents
+            example:
+              documents:
+                - type: "id_front"
+                  content_type: "image/jpeg"
+                  file_size: 2048576
+                - type: "id_back"
+                  content_type: "image/jpeg"
+                  file_size: 1948576
+                - type: "selfie"
+                  content_type: "image/jpeg"
+                  file_size: 1548576
+      responses:
+        '200':
+          description: Upload URL'leri oluşturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upload_urls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        document_type:
+                          type: string
+                          enum: [id_front, id_back, selfie]
+                        upload_url:
+                          type: string
+                          format: uri
+                        expires_at:
+                          type: string
+                          format: date-time
+                      required:
+                        - document_type
+                        - upload_url
+                        - expires_at
+                  kyc_session_id:
+                    type: string
+                    description: "KYC oturum ID'si"
+                    example: "kyc_session_123456"
+              example:
+                upload_urls:
+                  - document_type: "id_front"
+                    upload_url: "https://s3.amazonaws.com/bucket/kyc/mentor123/id-front.jpg?X-Amz-Signature=..."
+                    expires_at: "2025-01-15T11:00:00Z"
+                  - document_type: "id_back"
+                    upload_url: "https://s3.amazonaws.com/bucket/kyc/mentor123/id-back.jpg?X-Amz-Signature=..."
+                    expires_at: "2025-01-15T11:00:00Z"
+                  - document_type: "selfie"
+                    upload_url: "https://s3.amazonaws.com/bucket/kyc/mentor123/selfie.jpg?X-Amz-Signature=..."
+                    expires_at: "2025-01-15T11:00:00Z"
+                kyc_session_id: "kyc_session_123456"
+        '400':
+          description: Geçersiz dosya türü veya boyutu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/kyc/submit:
+    post:
+      summary: KYC belgelerini işleme gönder
+      description: Yüklenen KYC belgelerini 3rd party provider'a gönderir
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kyc_session_id:
+                  type: string
+                  example: "kyc_session_123456"
+                uploaded_documents:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [id_front, id_back, selfie]
+                      storage_url:
+                        type: string
+                        format: uri
+                    required:
+                      - type
+                      - storage_url
+              required:
+                - kyc_session_id
+                - uploaded_documents
+            example:
+              kyc_session_id: "kyc_session_123456"
+              uploaded_documents:
+                - type: "id_front"
+                  storage_url: "https://s3.amazonaws.com/bucket/kyc/mentor123/id-front.jpg"
+                - type: "id_back"
+                  storage_url: "https://s3.amazonaws.com/bucket/kyc/mentor123/id-back.jpg"
+                - type: "selfie"
+                  storage_url: "https://s3.amazonaws.com/bucket/kyc/mentor123/selfie.jpg"
+      responses:
+        '200':
+          description: KYC işleme başlatıldı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "KYC verification started"
+                  kyc_id:
+                    type: string
+                    format: uuid
+                    example: "kyc_123e4567-e89b-12d3-a456-426614174000"
+                  estimated_completion:
+                    type: string
+                    example: "24-48 hours"
+                  status:
+                    type: string
+                    example: "processing"
+        '400':
+          description: Eksik belgeler veya geçersiz session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/kyc/status:
+    get:
+      summary: KYC durumu getir
+      description: Mentor'un kimlik doğrulama durumunu getir
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: KYC durumu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KYCUpload'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: KYC record not found
+
+  /admin/company-verifications:
+    get:
+      summary: Şirket doğrulama listesi (Admin)
+      description: Bekleyen şirket doğrulama başvurularını listeler
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+          description: "Durum filtresi"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Şirket doğrulama listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CompanyVerification'
+                  total:
+                    type: integer
+                    example: 45
+                  has_more:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - admin only
+
+  /admin/company-verifications/{verification_id}/approve:
+    post:
+      summary: Şirket doğrulamayı onayla (Admin)
+      description: Bekleyen şirket doğrulamasını onaylar
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: verification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                admin_notes:
+                  type: string
+                  maxLength: 500
+                  description: "Admin notları (opsiyonel)"
+            example:
+              admin_notes: "Şirket bilgileri doğrulandı, LinkedIn profili uyumlu"
+      responses:
+        '200':
+          description: Şirket doğrulaması onaylandı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Company verification approved"
+                  verified_at:
+                    type: string
+                    format: date-time
+                    example: "2025-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - admin only
+        '404':
+          description: Verification not found
+
+  /admin/company-verifications/{verification_id}/reject:
+    post:
+      summary: Şirket doğrulamayı reddet (Admin)
+      description: Şirket doğrulama başvurusunu reddeder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: verification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejection_reason:
+                  type: string
+                  maxLength: 500
+                  description: "Red gerekçesi"
+                  example: "Vergi numarası doğrulanamadı"
+              required:
+                - rejection_reason
+      responses:
+        '200':
+          description: Şirket doğrulaması reddedildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Company verification rejected"
+                  rejection_reason:
+                    type: string
+                    example: "Vergi numarası doğrulanamadı"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - admin only
+        '404':
+          description: Verification not found
+
+  /webhooks/kyc-result:
+    post:
+      summary: KYC sonuç webhook'u
+      description: 3rd party KYC provider'dan gelen sonuç webhook'u
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kyc_session_id:
+                  type: string
+                  example: "kyc_session_123456"
+                status:
+                  type: string
+                  enum: [verified, rejected]
+                  example: "verified"
+                confidence_score:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  example: 0.95
+                rejection_reasons:
+                  type: array
+                  items:
+                    type: string
+                  example: ["document_quality_low", "face_mismatch"]
+                provider_data:
+                  type: object
+                  description: "Provider'a özel ek veriler"
+              required:
+                - kyc_session_id
+                - status
+      responses:
+        '200':
+          description: Webhook işlendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "KYC result processed successfully"
+        '400':
+          description: Geçersiz webhook payload
+        '401':
+          description: Webhook signature invalid
+
+tags:
+  - name: Badges
+    description: Mentor rozet sistemi
+  - name: Company Verification
+    description: Şirket doğrulama işlemleri
+  - name: KYC
+    description: Kimlik doğrulama sistemi
+  - name: Admin
+    description: Admin moderasyon işlemleri
+  - name: Webhooks
+    description: External provider webhook'ları

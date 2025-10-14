@@ -1,0 +1,688 @@
+openapi: 3.0.3
+info:
+  title: MentorHub - Publishing & Analytics API
+  description: Mentor profil yayınlama ve analitik entegrasyonu
+  version: 1.0.0
+  contact:
+    name: MentorHub Publishing Team
+    email: publishing@mentorhub.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.mentorhub.com/v1
+    description: Production server
+  - url: https://staging-api.mentorhub.com/v1
+    description: Staging server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token with roles (platform_admin, mentor)
+
+  schemas:
+    ProfileStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, published, hidden]
+          example: "published"
+        published_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        visibility:
+          type: string
+          enum: [public, private, unlisted]
+          example: "public"
+      required:
+        - status
+
+    SEOSettings:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 60
+          description: "SEO başlık (max 60 karakter)"
+          example: "Ayşe Kılıç - Senior UX Designer | MentorHub"
+        description:
+          type: string
+          maxLength: 160
+          description: "Meta açıklama (max 160 karakter)"
+          example: "8 yıllık UX deneyimi ile kariyer gelişiminize destek. Figma, UX Research ve Portfolio Review konularında uzman mentörlük."
+        og_image:
+          type: string
+          format: uri
+          description: "Open Graph görseli (1200x630px)"
+          example: "https://cdn.mentorhub.com/og-images/ayse-kilic.jpg"
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+          minLength: 3
+          maxLength: 60
+          description: "URL slug (kebab-case)"
+          example: "ayse-kilic-ux-designer"
+        keywords:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+          description: "SEO anahtar kelimeler"
+          example: ["UX Design", "Figma", "Portfolio Review", "Kariyer Koçluğu"]
+      required:
+        - title
+        - description
+        - slug
+
+    AnalyticsSettings:
+      type: object
+      properties:
+        ga4_id:
+          type: string
+          pattern: "^G-[A-Z0-9]{10}$"
+          description: "Google Analytics 4 Measurement ID"
+          example: "G-XXXXXXXXXX"
+        fb_pixel_id:
+          type: string
+          pattern: "^[0-9]{15,16}$"
+          description: "Facebook Pixel ID"
+          example: "123456789012345"
+        hotjar_id:
+          type: string
+          pattern: "^[0-9]{6,7}$"
+          description: "Hotjar Site ID"
+          example: "1234567"
+        custom_scripts:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Custom Analytics"
+              script:
+                type: string
+                description: "JavaScript kodu"
+              position:
+                type: string
+                enum: [head, body_start, body_end]
+                example: "head"
+          maxItems: 3
+          description: "Özel analitik scriptleri"
+
+    PublishingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Profile published successfully"
+        public_url:
+          type: string
+          format: uri
+          example: "https://mentorhub.com/mentor/ayse-kilic-ux-designer"
+        seo_preview:
+          type: object
+          properties:
+            google_snippet:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                url:
+                  type: string
+            social_card:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+        analytics_status:
+          type: object
+          properties:
+            ga4_active:
+              type: boolean
+            fb_pixel_active:
+              type: boolean
+            hotjar_active:
+              type: boolean
+      required:
+        - success
+        - message
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "SLUG_DUPLICATE"
+            message:
+              type: string
+              example: "Slug already exists"
+            field:
+              type: string
+              example: "slug"
+          required:
+            - code
+            - message
+
+paths:
+  /mentors/{id}/status:
+    patch:
+      summary: Profil durumunu güncelle
+      description: Mentor profilini yayına al, gizle veya taslağa al
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Mentor UUID"
+          example: "c9b2e8f4-1234-5678-9abc-def012345678"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileStatus'
+            example:
+              status: "published"
+              visibility: "public"
+      responses:
+        '200':
+          description: Profil durumu güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishingResponse'
+              example:
+                success: true
+                message: "Profile published successfully"
+                public_url: "https://mentorhub.com/mentor/ayse-kilic-ux-designer"
+                seo_preview:
+                  google_snippet:
+                    title: "Ayşe Kılıç - Senior UX Designer | MentorHub"
+                    description: "8 yıllık UX deneyimi ile kariyer gelişiminize destek..."
+                    url: "mentorhub.com/mentor/ayse-kilic-ux-designer"
+                analytics_status:
+                  ga4_active: true
+                  fb_pixel_active: false
+                  hotjar_active: false
+        '400':
+          description: Geçersiz durum veya eksik profil bilgileri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "PROFILE_INCOMPLETE"
+                  message: "Profile must be complete before publishing"
+                  field: "avatar_url"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - sadece mentor sahibi veya admin
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/seo:
+    patch:
+      summary: SEO ayarlarını güncelle
+      description: Mentor profili için SEO meta verilerini günceller
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SEOSettings'
+            example:
+              title: "Ayşe Kılıç - Senior UX Designer | MentorHub"
+              description: "8 yıllık UX deneyimi ile kariyer gelişiminize destek. Figma, UX Research ve Portfolio Review konularında uzman mentörlük."
+              og_image: "https://cdn.mentorhub.com/og-images/ayse-kilic.jpg"
+              slug: "ayse-kilic-ux-designer"
+              keywords: ["UX Design", "Figma", "Portfolio Review", "Kariyer Koçluğu"]
+      responses:
+        '200':
+          description: SEO ayarları güncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "SEO settings updated successfully"
+                  seo_preview:
+                    type: object
+                    properties:
+                      google_snippet:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          url:
+                            type: string
+                      social_card:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          image:
+                            type: string
+        '400':
+          description: Geçersiz SEO verileri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "SLUG_DUPLICATE"
+                  message: "Slug already exists"
+                  field: "slug"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/analytics:
+    patch:
+      summary: Analitik ayarlarını güncelle
+      description: Mentor profili için analitik entegrasyonlarını ayarlar
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsSettings'
+            example:
+              ga4_id: "G-XXXXXXXXXX"
+              fb_pixel_id: "123456789012345"
+              hotjar_id: "1234567"
+              custom_scripts:
+                - name: "LinkedIn Insight"
+                  script: "<!-- LinkedIn tracking code -->"
+                  position: "head"
+      responses:
+        '200':
+          description: Analitik ayarları güncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Analytics settings updated successfully"
+                  active_integrations:
+                    type: array
+                    items:
+                      type: string
+                    example: ["ga4", "hotjar"]
+        '400':
+          description: Geçersiz analitik ID'leri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /mentors/{id}/public:
+    get:
+      summary: Public profil + SEO meta getir
+      description: Yayınlanmış mentor profilini SEO meta verileri ile birlikte getirir
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_analytics
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Analitik kodlarını dahil et"
+      responses:
+        '200':
+          description: Public mentor profili
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mentor:
+                    type: object
+                    description: "Mentor profil verisi"
+                  seo:
+                    $ref: '#/components/schemas/SEOSettings'
+                  analytics:
+                    $ref: '#/components/schemas/AnalyticsSettings'
+                  public_url:
+                    type: string
+                    format: uri
+                    example: "https://mentorhub.com/mentor/ayse-kilic-ux-designer"
+              example:
+                mentor:
+                  id: "c9b2e8f4-1234-5678-9abc-def012345678"
+                  display_name: "Ayşe Kılıç"
+                  title: "Senior UX Designer"
+                  company_name: "Getir"
+                  short_bio: "Kullanıcı odaklı tasarımla kariyer gelişiminize destek."
+                  rating_avg: 4.9
+                  verified_flags:
+                    identity: true
+                    company: true
+                seo:
+                  title: "Ayşe Kılıç - Senior UX Designer | MentorHub"
+                  description: "8 yıllık UX deneyimi ile kariyer gelişiminize destek..."
+                  og_image: "https://cdn.mentorhub.com/og-images/ayse-kilic.jpg"
+                  slug: "ayse-kilic-ux-designer"
+                analytics:
+                  ga4_id: "G-XXXXXXXXXX"
+                  fb_pixel_id: null
+                public_url: "https://mentorhub.com/mentor/ayse-kilic-ux-designer"
+        '404':
+          description: Mentor bulunamadı veya yayınlanmamış
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /mentors/{id}/seo/preview:
+    get:
+      summary: SEO önizleme getir
+      description: Google snippet ve sosyal medya kartı önizlemesi
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SEO önizleme
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  google_snippet:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        example: "Ayşe Kılıç - Senior UX Designer | MentorHub"
+                      description:
+                        type: string
+                        example: "8 yıllık UX deneyimi ile kariyer gelişiminize destek..."
+                      url:
+                        type: string
+                        example: "mentorhub.com/mentor/ayse-kilic-ux-designer"
+                      breadcrumb:
+                        type: string
+                        example: "MentorHub › Mentorlar › UX Design"
+                  social_cards:
+                    type: object
+                    properties:
+                      linkedin:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          image:
+                            type: string
+                      twitter:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          image:
+                            type: string
+                      facebook:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          description:
+                            type: string
+                          image:
+                            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Mentor not found
+
+  /admin/publishing/queue:
+    get:
+      summary: Yayın kuyruğu (Admin)
+      description: Yayın bekleyen mentor profillerini listeler
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending_review, approved, rejected]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Yayın kuyruğu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mentors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        display_name:
+                          type: string
+                        title:
+                          type: string
+                        submitted_at:
+                          type: string
+                          format: date-time
+                        profile_completion:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                        review_priority:
+                          type: string
+                          enum: [low, normal, high, urgent]
+                  total:
+                    type: integer
+                  has_more:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - admin only
+
+  /admin/publishing/{id}/approve:
+    post:
+      summary: Profil yayınını onayla (Admin)
+      description: Mentor profilini yayına alır ve slug oluşturur
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                custom_slug:
+                  type: string
+                  pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+                  description: "Özel slug (opsiyonel)"
+                admin_notes:
+                  type: string
+                  maxLength: 500
+                  description: "Admin notları"
+            example:
+              custom_slug: "ayse-kilic-ux-expert"
+              admin_notes: "Profil kaliteli, hızlı onay"
+      responses:
+        '200':
+          description: Profil yayına alındı
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishingResponse'
+        '400':
+          description: Profil eksik veya slug çakışması
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - admin only
+        '404':
+          description: Mentor not found
+
+  /admin/publishing/{id}/reject:
+    post:
+      summary: Profil yayınını reddet (Admin)
+      description: Mentor profil yayın talebini reddeder
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejection_reason:
+                  type: string
+                  maxLength: 500
+                  description: "Red gerekçesi"
+                  example: "Profil fotoğrafı kalitesi yetersiz"
+                required_changes:
+                  type: array
+                  items:
+                    type: string
+                  description: "Gerekli değişiklikler"
+                  example: ["avatar_url", "long_bio"]
+              required:
+                - rejection_reason
+      responses:
+        '200':
+          description: Profil yayını reddedildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Profile publication rejected"
+                  rejection_reason:
+                    type: string
+                    example: "Profil fotoğrafı kalitesi yetersiz"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - admin only
+        '404':
+          description: Mentor not found
+
+tags:
+  - name: Publishing
+    description: Profil yayınlama işlemleri
+  - name: SEO
+    description: SEO optimizasyonu
+  - name: Analytics
+    description: Analitik entegrasyonları
+  - name: Admin
+    description: Admin moderasyon işlemleri

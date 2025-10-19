@@ -39,7 +39,11 @@ const MentorsPage: React.FC<MentorsPageProps> = ({ onBack }) => {
   });
 
   const handleHomeClick = () => {
-    window.dispatchEvent(new CustomEvent('navigateTo', { detail: 'home' }));
+    if (onBack) {
+      onBack();
+    } else {
+      window.dispatchEvent(new CustomEvent('navigateTo', { detail: 'home' }));
+    }
   };
 
   return (

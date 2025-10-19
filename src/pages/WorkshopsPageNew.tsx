@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Search, Sparkles, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
-import BackButton from '../components/BackButton';
+import Breadcrumb from '../components/Breadcrumb';
 import WorkshopCardDark from '../components/workshop/WorkshopCardDark';
 import { 
   getWorkshops, 
@@ -52,38 +52,40 @@ const WorkshopsPageNew: React.FC<WorkshopsPageNewProps> = ({ onBack, onViewDetai
     }
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section - KOYU */}
-      <section className="bg-gradient-to-b from-base-bg via-base-panel to-base-soft text-text-high relative">
-        {/* Grain/Noise Pattern (sadece hero'da) */}
-        <div 
-          className="absolute inset-0 pointer-events-none opacity-[0.02]"
-          style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
-            backgroundRepeat: 'repeat'
-          }}
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <BackButton fallback="home" className="mb-6 text-text-dim hover:text-text-high" />
+  const handleHomeClick = () => {
+    window.dispatchEvent(new CustomEvent('navigateTo', { detail: 'home' }));
+  };
 
-          <h1 className="text-3xl md:text-4xl font-semibold mb-4">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - LIGHT */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Breadcrumb
+            items={[
+              { label: 'Ana Sayfa', onClick: handleHomeClick },
+              { label: 'Workshoplar' }
+            ]}
+            className="mb-4"
+          />
+
+          <h1 className="text-3xl md:text-4xl font-semibold mb-4 text-[#1E1B4B]">
             Platformdaki Workshopları Keşfet
           </h1>
-          <p className="text-lg text-text-dim mb-8 max-w-3xl">
+          <p className="text-lg text-gray-600 mb-8 max-w-3xl">
             İlgi alanına uygun workshoplarla gelişimini hızlandır. Uzman eğitmenlerden öğren, kariyerine yön ver.
           </p>
 
           {/* Search Bar */}
           <div className="max-w-2xl">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-dim" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Workshop ara..."
-                className="w-full pl-12 pr-4 py-4 text-text-high bg-base-panel/60 rounded-xl border-0 focus:ring-2 focus:ring-accent-primary placeholder:text-text-dim"
+                className="w-full pl-12 pr-4 py-4 text-gray-900 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#1E1B4B] focus:border-transparent placeholder:text-gray-500"
               />
             </div>
           </div>
@@ -152,32 +154,22 @@ const WorkshopsPageNew: React.FC<WorkshopsPageNewProps> = ({ onBack, onViewDetai
 
         {loading && (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-warm"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FACC15]"></div>
           </div>
         )}
 
-        {/* CTA Section - KOYU */}
-        <section className="mt-16 bg-gradient-to-r from-base-bg via-base-panel to-base-soft rounded-2xl p-8 lg:p-12 text-center relative overflow-hidden">
-          {/* Grain */}
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-[0.02]"
-            style={{
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
-              backgroundRepeat: 'repeat'
-            }}
-          />
-          <div className="relative">
-            <h2 className="text-3xl font-semibold mb-4 text-text-high">
-              Workshop Açmak İster Misiniz?
-            </h2>
-            <p className="text-lg text-text-dim mb-6 max-w-2xl mx-auto">
-              Uzmanlık alanınızda workshop düzenlemek için bizimle iletişime geçin. 
-              Size özel workshop planlaması yapalım.
-            </p>
-            <button className="bg-accent-warm text-black px-8 py-3 rounded-full font-semibold text-lg hover:bg-amber-400 transition-colors shadow-lg">
-              İletişime Geç
-            </button>
-          </div>
+        {/* CTA Section - LIGHT */}
+        <section className="mt-16 bg-white rounded-2xl border border-gray-200 shadow-md p-8 lg:p-12 text-center">
+          <h2 className="text-3xl font-semibold mb-4 text-[#1E1B4B]">
+            Workshop Açmak İster Misiniz?
+          </h2>
+          <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
+            Uzmanlık alanınızda workshop düzenlemek için bizimle iletişime geçin.
+            Size özel workshop planlaması yapalım.
+          </p>
+          <button className="bg-[#FACC15] text-[#1E1B4B] px-8 py-3 rounded-lg font-semibold text-lg hover:bg-[#F59E0B] transition-colors shadow-md">
+            İletişime Geç
+          </button>
         </section>
       </div>
     </div>

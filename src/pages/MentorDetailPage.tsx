@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import {
-  ArrowLeft, MapPin, Briefcase, Calendar, DollarSign, 
-  Star, Award, Languages, Bookmark, MessageSquare, 
+  MapPin, Briefcase, Calendar, DollarSign,
+  Star, Award, Languages, Bookmark, MessageSquare,
   Clock, CheckCircle, Building, Globe
 } from 'lucide-react';
+import BackButton from '../components/BackButton';
 import { mockMentors } from '../data/mockData';
 
 interface MentorDetailPageProps {
@@ -53,13 +54,7 @@ const MentorDetailPage: React.FC<MentorDetailPageProps> = ({ mentorId, onBack })
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
           <div className="py-4">
-          <button
-            onClick={onBack}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Geri</span>
-          </button>
+            <BackButton fallback="mentors" onBack={onBack} />
           </div>
 
           {/* Profile Header */}

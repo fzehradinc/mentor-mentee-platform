@@ -4,24 +4,32 @@ import { ArrowLeft } from 'lucide-react';
 
 interface BackButtonProps {
   fallback?: string;
+  onBack?: () => void;
   className?: string;
 }
 
-export default function BackButton({ fallback = 'mentee-dashboard', className = '' }: BackButtonProps) {
-  const goBack = () => {
+export default function BackButton({ fallback, onBack, className = '' }: BackButtonProps) {
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
     if (typeof window !== 'undefined') {
-      // Always try to go back in history
-      // Browser will handle whether there's a previous page or not
-      window.history.back();
+      if (window.history.length > 1) {
+        window.history.back();
+      } else if (fallback) {
+        window.dispatchEvent(new CustomEvent('navigateTo', { detail: fallback }));
+      }
     }
   };
 
   return (
     <button
       type="button"
-      onClick={goBack}
-      className={`inline-flex items-center gap-2 text-slate-700 hover:text-slate-900 transition-colors ${className}`}
-      aria-label="Geri"
+      onClick={handleBack}
+      className={`inline-flex items-center gap-2 text-[#1E1B4B] hover:text-[#1E1B4B]/80 transition-colors ${className}`}
+      aria-label="Önceki sayfaya dön"
     >
       <ArrowLeft className="h-4 w-4" />
       <span>Geri</span>

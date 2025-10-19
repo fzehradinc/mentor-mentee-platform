@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, Calendar, Clock, Users, MapPin, Star, 
-  Award, CheckCircle, Video, MapPinned 
+import {
+  Calendar, Clock, Users, MapPin, Star,
+  Award, CheckCircle, Video, MapPinned
 } from 'lucide-react';
+import BackButton from '../components/BackButton';
 import WorkshopRequestForm from '../components/workshop/WorkshopRequestForm';
 import { 
   getWorkshopBySlug, 
@@ -56,13 +57,6 @@ export default function WorkshopDetailPage({ slug, onBack }: WorkshopDetailPageP
     }
   };
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      window.history.back();
-    }
-  };
 
   if (loading) {
     return (
@@ -77,9 +71,7 @@ export default function WorkshopDetailPage({ slug, onBack }: WorkshopDetailPageP
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Workshop Bulunamadı</h2>
-          <button onClick={handleBack} className="text-blue-600 hover:text-blue-700">
-            Geri dön
-          </button>
+          <BackButton fallback="workshops" onBack={onBack} />
         </div>
       </div>
     );
@@ -101,13 +93,9 @@ export default function WorkshopDetailPage({ slug, onBack }: WorkshopDetailPageP
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-12">
           {/* Back Button */}
-          <button
-            onClick={handleBack}
-            className="absolute top-6 left-4 sm:left-6 lg:left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Geri</span>
-          </button>
+          <div className="absolute top-6 left-4 sm:left-6 lg:left-8">
+            <BackButton fallback="workshops" onBack={onBack} className="text-white/80 hover:text-white" />
+          </div>
 
           {/* Title & Badges */}
           <div className="flex flex-wrap gap-2 mb-4">

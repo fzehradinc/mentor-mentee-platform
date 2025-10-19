@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, DollarSign, Globe, Briefcase, GraduationCap, Wrench } from 'lucide-react';
 
 interface FiltersPanelProps {
   onFilterChange: (filters: any) => void;
@@ -46,27 +46,78 @@ export default function FiltersPanel({ onFilterChange, onSearchChange }: Filters
       languages: [],
       mode: [],
       availability: [],
-      badges: []
+      badges: [],
+      category: null
     });
     onSearchChange('');
     onFilterChange({});
   };
 
+  const quickCategories = [
+    {
+      id: 'finance',
+      icon: DollarSign,
+      title: 'Finans Mentörleri',
+      description: 'Yatırım, danışmanlık ve finansal strateji mentörleri',
+      tags: ['finans', 'yatırım', 'danışmanlık']
+    },
+    {
+      id: 'abroad',
+      icon: Globe,
+      title: 'Yurtdışı Mentörleri',
+      description: 'Erasmus, staj, iş ve göçmenlik süreçlerinde destek',
+      tags: ['yurtdışı', 'erasmus', 'staj', 'göçmenlik']
+    },
+    {
+      id: 'career',
+      icon: Briefcase,
+      title: 'Kariyer Mentörleri',
+      description: 'CV, mülakat, LinkedIn ve kariyer yönlendirme desteği',
+      tags: ['kariyer', 'cv', 'mülakat', 'linkedin']
+    },
+    {
+      id: 'academic',
+      icon: GraduationCap,
+      title: 'Akademik Mentörler',
+      description: 'YL/DR başvuruları, SoP/LoR hazırlığı ve akademik danışmanlık',
+      tags: ['akademik', 'yüksek lisans', 'doktora', 'sop', 'lor']
+    },
+    {
+      id: 'business',
+      icon: Wrench,
+      title: 'Ticaret Ustaları',
+      description: 'KOBİ, girişimcilik ve iş geliştirme alanında mentorluk',
+      tags: ['kobi', 'girişimcilik', 'iş geliştirme', 'ticaret']
+    }
+  ];
+
+  const handleQuickCategory = (category: typeof quickCategories[0]) => {
+    const newFilters = {
+      ...filters,
+      category: category.id,
+      searchTags: category.tags
+    };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+    setSearchQuery(category.tags[0]);
+    onSearchChange(category.tags[0]);
+  };
+
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="rounded-xl bg-base-panel/60 p-4 ring-1 ring-white/10">
-      <h4 className="mb-3 text-sm font-semibold text-text-high">{title}</h4>
+    <div className="rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+      <h4 className="mb-3 text-sm font-semibold text-gray-900">{title}</h4>
       {children}
     </div>
   );
 
   const Chip = ({ category, value, label }: { category: string; value: string; label: string }) => {
     const isSelected = filters[category]?.includes(value);
-    
+
     return (
-      <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-xs ring-1 transition-all ${
-        isSelected 
-          ? 'bg-accent-warm/20 text-accent-warm ring-accent-warm/50' 
-          : 'bg-white/5 text-text-high ring-white/10 hover:bg-white/10'
+      <label className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-xs border transition-all ${
+        isSelected
+          ? 'bg-[#FACC15]/20 text-[#1E1B4B] border-[#FACC15]'
+          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
       }`}>
         <input
           type="checkbox"
@@ -82,23 +133,56 @@ export default function FiltersPanel({ onFilterChange, onSearchChange }: Filters
   return (
     <div className="space-y-4">
       {/* Search */}
-      <div className="rounded-xl bg-base-soft p-3 ring-1 ring-white/10">
+      <div className="rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Alan / ders / kurum ara"
-            className="w-full pl-10 pr-3 py-2 rounded-md border-0 bg-base-panel/60 text-sm text-text-high placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-accent-primary"
+            className="w-full pl-10 pr-3 py-2 rounded-md border-0 bg-gray-50 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1E1B4B]"
           />
         </div>
+      </div>
+
+      {/* Quick Categories */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-gray-900">Hızlı Filtreler</h4>
+        {quickCategories.map((cat) => {
+          const Icon = cat.icon;
+          const isActive = filters.category === cat.id;
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() => handleQuickCategory(cat)}
+              className={`w-full text-left rounded-xl p-3 transition-all duration-200 ${
+                isActive
+                  ? 'bg-[#FACC15] text-[#1E1B4B] shadow-md'
+                  : 'bg-[#022C22] text-white hover:bg-[#FACC15] hover:text-[#1E1B4B]'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm mb-0.5">{cat.title}</div>
+                  <div className={`text-xs leading-tight ${
+                    isActive ? 'text-[#1E1B4B]/70' : 'text-white/70'
+                  }`}>
+                    {cat.description}
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Clear All */}
       <button
         onClick={clearAll}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 text-text-dim text-sm hover:bg-white/10 transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm hover:bg-gray-200 transition-colors"
       >
         <X className="w-4 h-4" />
         Tüm Filtreleri Temizle
@@ -142,7 +226,7 @@ export default function FiltersPanel({ onFilterChange, onSearchChange }: Filters
       {/* Bütçe */}
       <Section title="Bütçe (TL)">
         <div className="space-y-2">
-          <div className="flex justify-between text-xs text-text-dim">
+          <div className="flex justify-between text-xs text-gray-600">
             <span>0–500₺</span>
             <span>500–1000₺</span>
             <span>1000+₺</span>
@@ -159,7 +243,7 @@ export default function FiltersPanel({ onFilterChange, onSearchChange }: Filters
               setFilters({ ...filters, budget });
               onFilterChange({ ...filters, budget });
             }}
-            className="w-full accent-accent-warm"
+            className="w-full accent-[#FACC15]"
           />
         </div>
       </Section>
